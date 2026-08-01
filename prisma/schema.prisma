@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  profile     Profile?
+  connections Connection[]
+  applications Application[]
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName  String?
+  phone     String?
+  location  String?
+  linkedin  String?
+  github    String?
+  website   String?
+  coverNote String?
+
+  resumeFileName String?
+  resumeText     String?
+
+  updatedAt DateTime @updatedAt
+}
+
+enum ConnectionProvider {
+  GREENHOUSE
+  LEVER
+}
+
+model Connection {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider  ConnectionProvider
+  boardSlug String
+  label     String?
+  createdAt DateTime           @default(now())
+
+  jobs Job[]
+
+  @@unique([userId, provider, boardSlug])
+}
+
+model Job {
+  id           String   @id @default(cuid())
+  connectionId String
+  connection   Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  externalId String
+  title      String
+  location   String?
+  applyUrl   String
+  fetchedAt  DateTime @default(now())
+
+  applications Application[]
+
+  @@unique([connectionId, externalId])
+}
+
+enum ApplicationStatus {
+  DRAFT
+  REVIEW
+  SUBMITTED
+  FAILED
+}
+
+model Application {
+  id       String            @id @default(cuid())
+  userId   String
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId    String
+  job      Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status   ApplicationStatus @default(DRAFT)
+
+  submittedAt DateTime?
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, jobId])
+}
