@@ -37,6 +37,7 @@ platforms with public read APIs keeps this safe to use and to build on.
 
 ```bash
 npm install
+cp .env.example .env
 npx prisma migrate dev
 npm run dev
 ```
